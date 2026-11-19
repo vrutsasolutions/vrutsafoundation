@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/instrument-sans";
+
+/* Vrutsa Foundation design tokens.
+   Page: white. Text: black. Colour comes from the logo (saffron, leaf green)
+   and two supporting hues used for focus-area cards and status only. */
+@theme {
+  --color-saffron: #f0a500;
+  --color-saffron-soft: #fdf1d3;
+  --color-leaf: #0f5a1f;
+  --color-leaf-deep: #0a4217;
+  --color-leaf-soft: #e6f1e8;
+  --color-kumkum: #9f1239;
+  --color-peacock: #0b5c74;
+  --color-line: #dcdcdc;
+  --color-muted: #4a4a4a;
+  --font-display: "Bricolage Grotesque Variable", "Arial Narrow", Arial, sans-serif;
+  --font-sans: "Instrument Sans Variable", Arial, Helvetica, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { background: #fff; color: #000; font-family: var(--font-sans); font-size: 1.0625rem; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.08; letter-spacing: -0.02em; font-weight: 650; text-wrap: balance; }
+p { text-wrap: pretty; }
+:focus-visible { outline: 3px solid var(--color-leaf); outline-offset: 2px; border-radius: 2px; }
+::selection { background: var(--color-saffron); color: #000; }
+
+@layer components {
+  .wrap { @apply mx-auto w-full max-w-[1200px] px-5 sm:px-8; }
+  .section { @apply py-16 sm:py-24; }
+  .h-display { @apply text-[2.6rem] leading-[1.02] sm:text-6xl lg:text-7xl; }
+  .h-section { @apply text-3xl sm:text-[2.75rem]; }
+  .lede { @apply text-lg sm:text-xl text-[var(--color-muted)] max-w-[62ch]; }
+
+  .btn { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-base font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer; }
+  .btn-saffron { @apply bg-saffron text-black hover:bg-black hover:text-white; }
+  .btn-leaf { @apply bg-leaf text-white hover:bg-leaf-deep; }
+  .btn-line { @apply border-2 border-black text-black hover:bg-black hover:text-white; }
+  .btn-white { @apply bg-white text-black hover:bg-black hover:text-white; }
+  .btn-sm { @apply min-h-9 px-4 text-sm; }
+  .link { @apply font-semibold text-leaf underline decoration-2 underline-offset-4 hover:text-black; }
+
+  .field { @apply block w-full rounded-lg border border-neutral-400 bg-white px-3.5 py-2.5 text-base text-black placeholder:text-neutral-500 focus:border-leaf focus:outline-none focus:ring-2 focus:ring-leaf/30; }
+  .label { @apply mb-1.5 block text-sm font-semibold text-black; }
+  .help { @apply mt-1 text-sm text-[var(--color-muted)]; }
+  .notice { @apply rounded-lg border-l-4 px-4 py-3 text-[0.95rem]; }
+  .notice-ok { @apply border-leaf bg-leaf-soft; }
+  .notice-err { @apply border-kumkum bg-rose-50; }
+  .notice-info { @apply border-saffron bg-saffron-soft; }
+  .tag { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .prose-plain p + p { @apply mt-4; }
+
+  .table { @apply w-full text-left text-[0.95rem]; }
+  .table th { @apply border-b-2 border-black px-3 py-2.5 text-sm font-semibold; }
+  .table td { @apply border-b border-line px-3 py-3 align-top; }
+}
+
+/* One orchestrated entrance, hero only. */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.rise { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.mesh-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .rise, .mesh-line { animation: none; stroke-dashoffset: 0; }
+  html { scroll-behavior: auto; }
+}
+
+.leaflet-container { font-family: var(--font-sans); border-radius: 0.75rem; z-index: 0; }
+.vf-pin { border-radius: 9999px; border: 2px solid #000; box-shadow: 0 0 0 2px #fff; }
