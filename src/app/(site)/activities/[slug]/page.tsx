@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Gallery } from "@/components/cards";
-import { Img } from "@/components/Img";
 import { getActivity } from "@/lib/data";
 import { formatDate, paragraphs } from "@/lib/utils";
 
@@ -25,12 +24,10 @@ export default async function ActivityPage({ params }: Props) {
     <article>
       <div className="wrap pt-10 sm:pt-14">
         <Link href="/activities" className="link text-sm">All activities</Link>
-        <h1 className="mt-4 max-w-[22ch] text-4xl sm:text-6xl">{a.title}</h1>
+        <h1 className="mt-4 max-w-[34ch] text-4xl sm:text-6xl">{a.title}</h1>
         {a.summary && <p className="lede mt-5">{a.summary}</p>}
       </div>
-      {a.cover_url && (
-        <div className="wrap mt-10"><div className="relative aspect-[16/9] overflow-hidden rounded-2xl"><Img src={a.cover_url} alt="" sizes="(min-width:1200px) 1140px, 100vw" priority className="object-cover" /></div></div>
-      )}
+      {/* The cover photograph is used only on activity cards in lists; the page itself shows the gallery below. */}
       <div className="wrap section grid gap-12 lg:grid-cols-[1fr_300px]">
         <div>
           <div className="prose-plain max-w-[68ch] text-lg">{paragraphs(a.description).map((p, i) => <p key={i}>{p}</p>)}</div>

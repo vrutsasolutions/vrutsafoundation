@@ -17,6 +17,15 @@
   --color-muted: #4a4a4a;
   --font-display: "Bricolage Grotesque Variable", "Arial Narrow", Arial, sans-serif;
   --font-sans: "Instrument Sans Variable", Arial, Helvetica, sans-serif;
+
+  /* Heading scale: medium, professional sizes used by every page and the admin panel.
+     2xl ≈ 21px (card titles), 3xl 26px, 4xl 30px, 5xl 34px, 6xl 38px, 7xl 40px (largest page heading). */
+  --text-2xl: 1.3125rem;  --text-2xl--line-height: 1.25;
+  --text-3xl: 1.625rem;   --text-3xl--line-height: 1.2;
+  --text-4xl: 1.875rem;   --text-4xl--line-height: 1.15;
+  --text-5xl: 2.125rem;   --text-5xl--line-height: 1.1;
+  --text-6xl: 2.375rem;   --text-6xl--line-height: 1.08;
+  --text-7xl: 2.5rem;     --text-7xl--line-height: 1.05;
 }
 
 html { scroll-behavior: smooth; }
@@ -29,8 +38,8 @@ p { text-wrap: pretty; }
 @layer components {
   .wrap { @apply mx-auto w-full max-w-[1200px] px-5 sm:px-8; }
   .section { @apply py-16 sm:py-24; }
-  .h-display { @apply text-[2.6rem] leading-[1.02] sm:text-6xl lg:text-7xl; }
-  .h-section { @apply text-3xl sm:text-[2.75rem]; }
+  .h-display { @apply text-[2rem] leading-[1.08] sm:text-5xl lg:text-6xl; }
+  .h-section { @apply text-[1.625rem] sm:text-4xl; }
   .lede { @apply text-lg sm:text-xl text-[var(--color-muted)] max-w-[62ch]; }
 
   .btn { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-base font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer; }
