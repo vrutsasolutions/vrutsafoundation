@@ -6,6 +6,7 @@ import { Img } from "@/components/Img";
 import { requireUser } from "@/lib/auth";
 import { getDistricts, getLeaders, getStates } from "@/lib/data";
 import { formatDate, formatDateTime, formatINR } from "@/lib/utils";
+import { LOGO_URL } from "@/lib/supabase/env";
 
 export const metadata = { title: "My account", robots: { index: false } };
 
@@ -58,7 +59,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
             <div className={`mt-4 overflow-hidden rounded-2xl border-2 ${active ? "border-black" : "border-kumkum"}`}>
               <div className="border-b-4 border-saffron p-4 text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="Vrutsa Foundation" className="mx-auto h-12 w-auto" />
+                <img src={LOGO_URL} alt="Vrutsa Foundation" className="mx-auto h-12 w-auto" />
               </div>
               <div className="p-5 text-center">
                 <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-xl bg-saffron-soft">

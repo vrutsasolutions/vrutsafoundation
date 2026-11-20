@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "media:inventory": "node --env-file=.env.local scripts/r2-migrate-media.mjs inventory",
+    "media:copy": "node --env-file=.env.local scripts/r2-migrate-media.mjs copy",
+    "media:sql": "node --env-file=.env.local scripts/r2-migrate-media.mjs sql",
+    "media:verify": "node --env-file=.env.local scripts/r2-migrate-media.mjs verify"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

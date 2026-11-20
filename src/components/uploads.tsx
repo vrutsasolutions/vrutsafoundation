@@ -5,36 +5,35 @@ import { browserDb } from "@/lib/supabase/client";
 const rid = () => (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 const extOf = (f: File) => (f.name.split(".").pop() ?? "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-/** Uploads a public media file and returns its web address. Cloudflare R2 when the server has R2 keys,
-    otherwise the Supabase "media" bucket. Throws an Error with a message that can be shown to the person. */
+/** Uploads a public media file to Cloudflare R2 and returns its web address. The server checks who is asking,
+    hands out a short-lived upload address, then confirms the stored file. Throws an Error with a message that can
+    be shown to the person. There is no fallback to Supabase Storage for public files. */
 export async function uploadPublic(f: File, folder: string): Promise<string> {
-  if (f.size > 50 * 1024 * 1024) throw new Error(`${f.name} is larger than 50 MB.`);
-  const ask = await fetch("/api/upload-url", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ folder, contentType: f.type, size: f.size }) });
-  const plan = await ask.json().catch(() => ({}));
-  if (!ask.ok) throw new Error(plan.error ?? "The upload was not allowed.");
-  if (plan.provider === "r2") {
-    const put = await fetch(plan.uploadUrl, { method: "PUT", headers: { "content-type": f.type }, body: f });
-    if (!put.ok) throw new Error("Cloudflare R2 refused the upload. Check the bucket's CORS settings and keys.");
-    return plan.publicUrl as string;
-  }
-  const c = browserDb();
-  if (!c) throw new Error("Storage is not connected.");
-  const path = `${folder}/${rid()}.${extOf(f)}`;
-  const { error } = await c.storage.from("media").upload(path, f, { contentType: f.type, cacheControl: "31536000" });
-  if (error) throw new Error(error.message);
-  return c.storage.from("media").getPublicUrl(path).data.publicUrl;
+  const post = async (body: object) => {
+    const res = await fetch("/api/upload-url", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error ?? "The upload was not allowed.");
+    return data;
+  };
+  const plan = await post({ folder, contentType: f.type, size: f.size });
+  let put: Response;
+  try { put = await fetch(plan.uploadUrl, { method: "PUT", headers: { "content-type": plan.contentType }, body: f }); }
+  catch { throw new Error("The upload to Cloudflare R2 was blocked. Check the bucket's CORS settings allow this website's address."); }
+  if (!put.ok) throw new Error(`Cloudflare R2 refused the upload (${put.status}). Please try again.`);
+  const done = await post({ action: "confirm", key: plan.key });
+  return done.publicUrl as string;
 }
 
-/** Deletes a public media file from wherever it lives. Failures are ignored: the database row is what matters. */
-export async function removePublic(url: string) {
-  const marker = "/object/public/media/";
+/** Deletes a public media file. Returns null when it worked (or nothing needed deleting), otherwise the reason. */
+export async function removePublic(url: string): Promise<string | null> {
   try {
-    if (url.includes(marker)) await browserDb()?.storage.from("media").remove([decodeURIComponent(url.split(marker)[1])]);
-    else await fetch(`/api/upload-url?url=${encodeURIComponent(url)}`, { method: "DELETE" });
-  } catch { /* nothing to do */ }
+    const res = await fetch(`/api/upload-url?url=${encodeURIComponent(url)}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    return res.ok ? null : (data.error ?? `The file could not be deleted (${res.status}).`);
+  } catch { return "The file could not be deleted: the server did not answer."; }
 }
 
-/** Admin upload to the public "media" bucket. Stores the public address in a normal form field, or accepts a pasted link. */
+/** Admin upload of public media (Cloudflare R2). Stores the public address in a normal form field, or accepts a pasted link. */
 export function FileField({ name, defaultValue = "", accept, folder = "uploads", required }:
   { name: string; defaultValue?: string; accept?: string; folder?: string; required?: boolean }) {
   const [url, setUrl] = useState(defaultValue);
@@ -126,8 +125,9 @@ export function MediaManager({ column, id, initial }: { column: "activity_id" | 
     if (!c || !confirm("Remove this file from the website?")) return;
     const { error } = await c.from("activity_media").delete().eq("id", m.id);
     if (error) return setErr(error.message);
-    await removePublic(m.url);
     setItems((v) => v.filter((x) => x.id !== m.id));
+    const problem = await removePublic(m.url);
+    if (problem) setErr(`Removed from the website, but the stored file was not deleted: ${problem}`);
   }
   return (
     <div>

@@ -1,0 +1,10 @@
+# Cloudflare Worker that serves public website media from the private R2 bucket.
+# Read-only: GET, HEAD and OPTIONS. Uploads go through the website's signed URLs; deletions through the website.
+name = "vrutsa-foundation-assets"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "vrutsa-foundation-media"

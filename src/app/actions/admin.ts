@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireManager, requireStaff, requireSuper, type Session } from "@/lib/auth";
 import { serviceDb } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/supabase/env";
+import { PUBLIC_TYPES, publicUrlFor, putObject, r2Config } from "@/lib/r2";
 import { canAccess, RESOURCES } from "@/lib/resources";
 import { ALL_SETTING_KEYS } from "@/lib/settings";
 import { buildReceiptPdf } from "@/lib/receipt";
@@ -165,15 +166,16 @@ export async function approveRepApplication(id: string) {
   userId = link.data.user!.id;
   const setPasswordLink = link.data.properties?.action_link ?? "";
 
-  // 2. Public copy of the photograph for the profile page (the original stays private).
+  // 2. Public copy of the photograph for the profile page, in Cloudflare R2 (the original stays in private Supabase storage).
   let photoUrl: string | null = null;
   if (app.photo_path) {
-    const file = await svc.storage.from("private-uploads").download(app.photo_path);
-    if (file.data) {
-      const ext = app.photo_path.split(".").pop();
-      const path = `people/${app.id}.${ext}`;
-      const up = await svc.storage.from("media").upload(path, file.data, { contentType: file.data.type || "image/jpeg", upsert: true });
-      if (!up.error) photoUrl = svc.storage.from("media").getPublicUrl(path).data.publicUrl;
+    const r2 = r2Config();
+    const file = r2 ? await svc.storage.from("private-uploads").download(app.photo_path) : null;
+    const type = file?.data?.type || "image/jpeg";
+    if (r2 && file?.data && PUBLIC_TYPES[type]?.ext && type.startsWith("image/")) {
+      const key = `people/${app.id}-${randomBytes(4).toString("hex")}.${PUBLIC_TYPES[type].ext}`;
+      try { await putObject(r2, key, await file.data.arrayBuffer(), type); photoUrl = publicUrlFor(r2, key); }
+      catch (e) { console.error("[approve] photo copy to R2 failed", e); }
     }
   }
 

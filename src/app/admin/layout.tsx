@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { LOGO_URL } from "@/lib/supabase/env";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { AdminNav } from "@/components/admin/ui";
@@ -55,7 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[264px_1fr]">
       <aside className="border-b border-line p-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
-        <Link href="/" aria-label="Back to the website"><Image src="/logo.png" alt="Vrutsa Foundation" width={414} height={148} className="h-11 w-auto" /></Link>
+        <Link href="/" aria-label="Back to the website"><Image src={LOGO_URL} alt="Vrutsa Foundation" width={414} height={148} className="h-11 w-auto" /></Link>
         <div className={`mt-4 rounded-lg px-3 py-2.5 text-sm ${s.isSuper ? "bg-black text-white" : "bg-saffron-soft"}`}>
           <p className="font-semibold">{s.profile?.full_name || s.user.email}</p>
           <p className="opacity-80">{s.isSuper ? "Founder admin panel" : `${s.title} panel`}</p>
