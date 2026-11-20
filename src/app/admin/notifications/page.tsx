@@ -21,7 +21,7 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
       <h1 className="text-4xl">Email and WhatsApp</h1>
       <p className="mt-2 max-w-[70ch] text-[var(--color-muted)]">Every message the website creates is listed here with its delivery status. Each message is created once per person per event, so nobody receives duplicates.</p>
       <div className="mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
-        {[["Email (Resend)", ch.email, "Add RESEND_API_KEY and EMAIL_FROM on the server."], ["WhatsApp Business Platform", ch.whatsapp, "Add WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID, and get the templates approved."]].map(([name, on, hint]) => (
+        {[["Email (SMTP)", ch.email, "Add SMTP_HOST, SMTP_USER, SMTP_PASSWORD and EMAIL_FROM on the server."], ["WhatsApp Business Platform", ch.whatsapp, "Add WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID, and get the templates approved."]].map(([name, on, hint]) => (
           <div key={name as string} className={`rounded-xl border-l-4 p-4 ${on ? "border-leaf bg-leaf-soft" : "border-kumkum bg-rose-50"}`}>
             <p className="font-semibold">{name}</p>
             <p className="text-[0.95rem]">{on ? "Keys are present. Delivery is confirmed per message below." : `Not connected. ${hint} Messages wait here until then.`}</p>
