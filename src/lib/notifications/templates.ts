@@ -1,5 +1,5 @@
 import { SITE_URL } from "../supabase/env";
-import { formatDateTime, formatINR } from "../utils";
+import { formatDate, formatDateTime, formatINR } from "../utils";
 
 type P = Record<string, any>;
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
@@ -85,6 +85,11 @@ const EMAILS: Record<string, (p: P) => Email> = {
     essential: false,
     subject: `New event: ${p.event}`,
     body: `<p>Hello ${esc(p.name)},</p><p>Vrutsa Foundation has announced <strong>${esc(p.event)}</strong>.</p><p>${formatDateTime(p.starts_at)}${p.venue ? `<br>${esc(p.venue)}` : ""}</p><p><a href="${SITE_URL}/events/${esc(p.slug)}">Event details</a></p>`,
+  }),
+  activity_announcement: (p) => ({
+    essential: false,
+    subject: `New from Vrutsa Foundation: ${p.title}`,
+    body: `<p>Hello ${esc(p.name)},</p><p>We have shared a new update: <strong>${esc(p.title)}</strong>.</p>${p.summary ? `<p>${esc(p.summary)}</p>` : ""}<p>${formatDate(p.activity_date)}${p.location ? `<br>${esc(p.location)}` : ""}</p><p><a href="${SITE_URL}/activities/${esc(p.slug)}">Read more</a></p>`,
   }),
   event_update: (p) => ({
     subject: p.cancelled ? `Cancelled: ${p.event}` : `Updated details: ${p.event}`,

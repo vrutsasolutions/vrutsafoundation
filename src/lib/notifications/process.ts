@@ -4,42 +4,51 @@ import { after } from "next/server";
 import { serviceDb } from "../supabase/server";
 import { renderEmail, WHATSAPP_TEMPLATES } from "./templates";
 import { memberIdCard } from "../idcard";
+import nodemailer, { type Transporter } from "nodemailer";
 
 const CARD_TEMPLATES = ["volunteer_welcome", "representative_welcome", "id_card"];
 
 export const channelStatus = () => ({
-  email: Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
+  email: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD && process.env.EMAIL_FROM),
   whatsapp: Boolean(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
 });
 
 class NotConfigured extends Error {}
+
+// One reusable SMTP connection. Port 465 uses TLS straight away; other ports (587) upgrade with STARTTLS.
+let transport: Transporter | null = null;
+function smtp() {
+  if (!transport) {
+    const port = Number(process.env.SMTP_PORT ?? 587);
+    transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST, port, secure: port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
+    });
+  }
+  return transport;
+}
 const MAX_ATTEMPTS = 5;
 
 async function sendEmail(client: SupabaseClient, job: any) {
-  if (!channelStatus().email) throw new NotConfigured("Email is not configured: set RESEND_API_KEY and EMAIL_FROM");
+  if (!channelStatus().email) throw new NotConfigured("Email is not configured: set SMTP_HOST, SMTP_USER, SMTP_PASSWORD and EMAIL_FROM");
   const mail = renderEmail(job.template, job.payload ?? {});
   if (!mail) throw new NotConfigured(`No email template named "${job.template}"`);
 
-  const attachments: { filename: string; content: string }[] = [];
+  const attachments: { filename: string; content: Buffer }[] = [];
   if (job.template === "donation_acknowledgement" && job.payload?.pdf_path) {
     const { data, error } = await client.storage.from("receipts").download(job.payload.pdf_path);
     if (error || !data) throw new Error(`Receipt PDF could not be read: ${error?.message ?? "missing"}`);
-    attachments.push({ filename: `${job.payload.receipt_no}.pdf`, content: Buffer.from(await data.arrayBuffer()).toString("base64") });
+    attachments.push({ filename: `${job.payload.receipt_no}.pdf`, content: Buffer.from(await data.arrayBuffer()) });
   }
   if (CARD_TEMPLATES.includes(job.template) && job.payload?.member_id) {
     const card = await memberIdCard(client, job.payload.member_id);
     if (!card) throw new Error("The member record for this ID card was not found");
-    attachments.push({ filename: `Vrutsa-ID-${card.member.membership_id}.pdf`, content: Buffer.from(card.pdf).toString("base64") });
+    attachments.push({ filename: `Vrutsa-ID-${card.member.membership_id}.pdf`, content: Buffer.from(card.pdf) });
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": job.id },
-    body: JSON.stringify({
-      from: process.env.EMAIL_FROM, to: [job.recipient], subject: mail.subject, html: mail.html, attachments,
-      ...(process.env.EMAIL_REPLY_TO ? { reply_to: process.env.EMAIL_REPLY_TO } : {}),
-    }),
+  await smtp().sendMail({
+    from: process.env.EMAIL_FROM, to: job.recipient, subject: mail.subject, html: mail.html, attachments,
+    ...(process.env.EMAIL_REPLY_TO ? { replyTo: process.env.EMAIL_REPLY_TO } : {}),
   });
-  if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
 }
 
 async function sendWhatsApp(job: any) {
