@@ -19,6 +19,8 @@ export default async function EventPage({ params }: Props) {
   const e = await getEvent((await params).slug);
   if (!e) notFound();
   const upcoming = e.status === "upcoming";
+  // Outside registration page, when the founder chose "External registration link". Only http(s) addresses are linked.
+  const externalLink = /^https?:\/\/\S+$/i.test(String(e.registration_url ?? "").trim()) ? String(e.registration_url).trim() : null;
   const coordinators = String(e.coordinators ?? "").split(/[,;\n]+/).map((c: string) => c.trim()).filter(Boolean);
   const facts = [
     ["When", `${formatDateTime(e.starts_at)}${e.ends_at ? ` to ${formatDateTime(e.ends_at)}` : ""}`],
@@ -72,8 +74,11 @@ export default async function EventPage({ params }: Props) {
           {upcoming && e.registration_mode === "form" && (
             <div className="rounded-2xl border-2 border-black p-6"><h2 className="mb-4 text-2xl">Register</h2><EventRegisterForm eventId={e.id} /></div>
           )}
-          {upcoming && e.registration_mode === "link" && e.registration_url && (
-            <a href={e.registration_url} rel="noopener" className="btn btn-saffron w-full">Register for this event</a>
+          {e.registration_mode === "link" && externalLink && e.status !== "cancelled" && (
+            <a href={externalLink} target="_blank" rel="noopener noreferrer" className="btn btn-saffron w-full">
+              Register now
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
           )}
         </aside>
       </div>
